@@ -13,10 +13,10 @@ with open("requirements.txt") as f:
     install_requires = [line for line in f if line and line[0] not in "#-"]
 
 setup(
-    name="ChineseTimeNLP",
+    name="dateparser-tw",
     version="3.0.1",
     keywords=["nlp", "time nlp"],
-    url="https://github.com/KelabDev/ChineseTimeNLP",
+    url="https://github.com/ntu-rembot/dateparser-tw",
     author="Artin",
     author_email="lengthmin@gmail.com",
     long_description_content_type="text/markdown",
