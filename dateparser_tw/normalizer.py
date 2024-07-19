@@ -4,11 +4,8 @@ import arrow
 from arrow.arrow import Arrow
 from loguru import logger
 
-from .helpers.str_common import (
-    del_keyword,
-    filter_irregular_expression,
-    number_translator,
-)
+from .helpers.str_common import (del_keyword, filter_irregular_expression,
+                                 number_translator)
 from .point import TimePoint
 from .result import DeltaType, Result
 from .unit import TimeUnit
@@ -16,7 +13,7 @@ from .unit import TimeUnit
 
 # 时间表达式识别的主要工作类
 class TimeNormalizer:
-    def __init__(self, isPreferFuture=True, tz="Asia/Shanghai", pattern=None):
+    def __init__(self, isPreferFuture=True, tz="Asia/Taipei", pattern=None):
         self.isPreferFuture = isPreferFuture
         if pattern is None:
             from .resource.pattern import pattern

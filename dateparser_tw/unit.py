@@ -100,8 +100,8 @@ class TimeUnit:
         """
         年-规范化方法--该方法识别时间表达式单元的年字段
         """
-        # xx年后
-        rule = r"([0-9]{1,})(?=年后)"
+        # xx年後
+        rule = r"([0-9]{1,})(?=年後)"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -179,7 +179,7 @@ class TimeUnit:
         """
         日-规范化方法：该方法识别时间表达式单元的日字段
         """
-        rule = r"((?<!\d))([0-3][0-9]|[1-9])(?=(日|号))"
+        rule = r"((?<!\d))([0-3][0-9]|[1-9])(?=(日|號))"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -188,7 +188,7 @@ class TimeUnit:
             self.preferFuture(2)
             self._check_time(self.tp.tunit)
 
-        rule = r"((?<!\d))([0-3][0-9]|[1-9])(?=(日|天)后)"
+        rule = r"((?<!\d))([0-3][0-9]|[1-9])(?=(日|天)後)"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -197,17 +197,17 @@ class TimeUnit:
             self._check_time(self.tp.tunit)
 
     def norm_checkKeyword(self):
-        # * 对关键字：早（包含早上/早晨/早间），上午，中午,午间,下午,午后,晚上,傍晚,晚间,晚,pm,PM的正确时间计算
+        # * 对关键字：早（包含早上/早晨/早间），上午，中午,午间,下午,午後,晚上,傍晚,晚间,晚,pm,PM的正确时间计算
         # * 规约：
         # * 1.中午/午间0-10点视为12-22点
-        # * 2.下午/午后0-11点视为12-23点
+        # * 2.下午/午後0-11点视为12-23点
         # * 3.晚上/傍晚/晚间/晚1-11点视为13-23点，12点视为0点
         # * 4.0-11点pm/PM视为12-23点
         rule = r"凌晨"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
-            if self.tp.hour == -1:  # 增加对没有明确时间点，只写了"凌晨"这种情况的处理
+            if self.tp.hour == -1:  # 增加对没有明确时间点，只写了"凌晨"這种情况的处理
                 self.tp.hour = RangeTimeEnum.day_break
             elif 12 <= self.tp.hour <= 23:
                 self.tp.hour -= 12
@@ -217,11 +217,13 @@ class TimeUnit:
             self.preferFuture(3)
             self.isAllDayTime = False
 
-        rule = r"早上|早晨|早间|晨间|今早|明早|早|清晨"
+        rule = r"早上|早晨|早間|晨間|今早|明早|早|清晨"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
-            if self.tp.hour == -1:  # 增加对没有明确时间点，只写了"早上/早晨/早间"这种情况的处理
+            if (
+                self.tp.hour == -1
+            ):  # 增加对没有明确时间点，只写了"早上/早晨/早间"這种情况的处理
                 self.tp.hour = RangeTimeEnum.early_morning
                 # 处理倾向于未来时间的情况
             elif 12 <= self.tp.hour <= 23:
@@ -235,7 +237,7 @@ class TimeUnit:
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
-            if self.tp.hour == -1:  # 增加对没有明确时间点，只写了"上午"这种情况的处理
+            if self.tp.hour == -1:  # 增加对没有明确时间点，只写了"上午"這种情况的处理
                 self.tp.hour = RangeTimeEnum.morning
             elif 12 <= self.tp.hour <= 23:
                 self.tp.hour -= 12
@@ -245,31 +247,35 @@ class TimeUnit:
             self.preferFuture(3)
             self.isAllDayTime = False
 
-        rule = r"(中午)|(午间)|(白天)"
+        rule = r"(中午)|(午間)|(白天)"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
             if 0 <= self.tp.hour <= 10:
                 self.tp.hour += 12
-            if self.tp.hour == -1:  # 增加对没有明确时间点，只写了"中午/午间"这种情况的处理
+            if (
+                self.tp.hour == -1
+            ):  # 增加对没有明确时间点，只写了"中午/午间"這种情况的处理
                 self.tp.hour = RangeTimeEnum.noon
             # 处理倾向于未来时间的情况
             self.preferFuture(3)
             self.isAllDayTime = False
 
-        rule = r"(下午)|(午后)|(pm)|(PM)"
+        rule = r"(下午)|(午後)|(pm)|(PM)"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
             if 0 <= self.tp.hour <= 11:
                 self.tp.hour += 12
-            if self.tp.hour == -1:  # 增加对没有明确时间点，只写了"下午|午后"这种情况的处理
+            if (
+                self.tp.hour == -1
+            ):  # 增加对没有明确时间点，只写了"下午|午後"這种情况的处理
                 self.tp.hour = RangeTimeEnum.afternoon
             # 处理倾向于未来时间的情况
             self.preferFuture(3)
             self.isAllDayTime = False
 
-        rule = r"晚上|夜间|夜里|今晚|明晚|晚|夜里"
+        rule = r"晚上|夜間|夜裡|今晚|明晚|晚|夜裡"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -277,7 +283,9 @@ class TimeUnit:
                 self.tp.hour += 12
             elif self.tp.hour == 12:
                 self.tp.hour = 0
-            elif self.tp.hour == -1:  # 增加对没有明确时间点，只写了"下午|午后"这种情况的处理
+            elif (
+                self.tp.hour == -1
+            ):  # 增加对没有明确时间点，只写了"下午|午後"這种情况的处理
                 self.tp.hour = RangeTimeEnum.lateNight
             # 处理倾向于未来时间的情况
             self.preferFuture(3)
@@ -287,7 +295,7 @@ class TimeUnit:
         """
         时-规范化方法：该方法识别时间表达式单元的时字段
         """
-        rule = r"(?<!(周|星期))([0-2]?[0-9])(?=(点|时))"
+        rule = r"(?<!(周|星期))([0-2]?[0-9])(?=(點|時))"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -303,7 +311,7 @@ class TimeUnit:
         """
         分-规范化方法：该方法识别时间表达式单元的分字段
         """
-        rule = r"([0-9]+(?=分(?!钟)))|((?<=((?<!小)[点时]))[0-5]?[0-9](?!刻))"
+        rule = r"([0-9]+(?=分(?!鐘)))|((?<=((?<!小)[点时]))[0-5]?[0-9](?!刻))"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -313,7 +321,7 @@ class TimeUnit:
                 # self.preferFuture(4)
                 self.isAllDayTime = False
         # 加对一刻，半，3刻的正确识别（1刻为15分，半为30分，3刻为45分）
-        rule = r"(?<=[点时])[1一]刻(?!钟)"
+        rule = r"(?<=[点时])[1一]刻(?!鐘)"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -331,7 +339,7 @@ class TimeUnit:
             self.preferFuture(4)
             self.isAllDayTime = False
 
-        rule = r"(?<=[点时])[3三]刻(?!钟)"
+        rule = r"(?<=[点时])[3三]刻(?!鐘)"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -353,9 +361,9 @@ class TimeUnit:
 
     def norm_setSpecial(self):
         """
-        特殊形式的规范化方法-该方法识别特殊形式的时间表达式单元的各个字段
+        特殊形式的规范化方法-该方法识别特殊形式的时间表达式单元的各個字段
         """
-        rule = r"(晚上|夜间|夜里|今晚|明晚|晚|夜里|下午|午后)(?<!(周|星期))([0-2]?[0-9]):[0-5]?[0-9]:[0-5]?[0-9]"
+        rule = r"(晚上|夜間|夜裡|今晚|明晚|晚|夜裡|下午|午後)(?<!(周|星期))([0-2]?[0-9]):[0-5]?[0-9]:[0-5]?[0-9]"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -377,7 +385,7 @@ class TimeUnit:
                 self.isAllDayTime = False
 
         else:
-            rule = r"(晚上|夜间|夜里|今晚|明晚|晚|夜里|下午|午后)(?<!(周|星期))([0-2]?[0-9]):[0-5]?[0-9]"
+            rule = r"(晚上|夜間|夜裡|今晚|明晚|晚|夜裡|下午|午後)(?<!(周|星期))([0-2]?[0-9]):[0-5]?[0-9]"
             pattern: Pattern = re.compile(rule)
             match = pattern.search(self.exp_time)
             if match is not None:
@@ -439,7 +447,7 @@ class TimeUnit:
                         self.isAllDayTime = False
 
         if match is None:
-            rule = r"(?<!(周|星期|晚上|夜间|夜里|今晚|明晚|晚|夜里|下午|午后))([0-2]?[0-9]):[0-5]?[0-9]:[0-5]?[0-9]"
+            rule = r"(?<!(周|星期|晚上|夜間|夜裡|今晚|明晚|晚|夜裡|下午|午後))([0-2]?[0-9]):[0-5]?[0-9]:[0-5]?[0-9]"
             pattern: Pattern = re.compile(rule)
             match = pattern.search(self.exp_time)
             if match is not None:
@@ -452,7 +460,7 @@ class TimeUnit:
                 self.preferFuture(3)
                 self.isAllDayTime = False
             else:
-                rule = r"(?<!(周|星期|晚上|夜间|夜里|今晚|明晚|晚|夜里|下午|午后))([0-2]?[0-9]):[0-5]?[0-9]"
+                rule = r"(?<!(周|星期|晚上|夜間|夜裡|今晚|明晚|晚|夜裡|下午|午後))([0-2]?[0-9]):[0-5]?[0-9]"
                 pattern: Pattern = re.compile(rule)
                 match = pattern.search(self.exp_time)
                 if match is not None:
@@ -463,7 +471,7 @@ class TimeUnit:
                     # 处理倾向于未来时间的情况
                     self.preferFuture(3)
                     self.isAllDayTime = False
-        # 这里是对年份表达的极好方式
+        # 這里是对年份表达的极好方式
         rule = (
             r"[0-9]?[0-9]?[0-9]{2}-((10)|(11)|(12)|([1-9]))-((?<!\d))([0-3][0-9]|[1-9])"
         )
@@ -526,7 +534,7 @@ class TimeUnit:
             day = int(match.group())
             cur = cur.shift(days=-day)
 
-        rule = r"\d+(?=天[以之]?后)"
+        rule = r"\d+(?=天[以之]?後)"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -534,7 +542,7 @@ class TimeUnit:
             day = int(match.group())
             cur = cur.shift(days=day)
 
-        rule = r"\d+(?=(个)?月[以之]?前)"
+        rule = r"\d+(?=(個)?月[以之]?前)"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -542,7 +550,7 @@ class TimeUnit:
             month = int(match.group())
             cur = cur.shift(months=-month)
 
-        rule = r"\d+(?=(个)?月[以之]?后)"
+        rule = r"\d+(?=(個)?月[以之]?後)"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -558,7 +566,7 @@ class TimeUnit:
             year = int(match.group())
             cur = cur.shift(years=-year)
 
-        rule = r"\d+(?=年[以之]?后)"
+        rule = r"\d+(?=年[以之]?後)"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -578,7 +586,7 @@ class TimeUnit:
         """
         设置时间长度相关的时间表达式
         """
-        rule = r"\d+(?=个月(?![以之]?[前后]))"
+        rule = r"\d+(?=個月(?![以之]?[前後]))"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -586,7 +594,7 @@ class TimeUnit:
             month = int(match.group())
             self.tp.month = int(month)
 
-        rule = r"\d+(?=天(?![以之]?[前后]))"
+        rule = r"\d+(?=天(?![以之]?[前後]))"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -594,7 +602,7 @@ class TimeUnit:
             day = int(match.group())
             self.tp.day = int(day)
 
-        rule = r"\d+(?=(个)?小时(?![以之]?[前后]))"
+        rule = r"\d+(?=(個)?小時(?![以之]?[前後]))"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -602,7 +610,7 @@ class TimeUnit:
             hour = int(match.group())
             self.tp.hour = int(hour)
 
-        rule = r"\d+(?=分钟(?![以之]?[前后]))"
+        rule = r"\d+(?=分鐘(?![以之]?[前後]))"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -610,7 +618,7 @@ class TimeUnit:
             minute = int(match.group())
             self.tp.minute = int(minute)
 
-        rule = r"\d+(?=秒钟(?![以之]?[前后]))"
+        rule = r"\d+(?=秒鐘(?![以之]?[前後]))"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -618,7 +626,7 @@ class TimeUnit:
             second = int(match.group())
             self.tp.second = int(second)
 
-        rule = r"\d+(?=(个)?(周|星期|礼拜)(?![以之]?[前后]))"
+        rule = r"\d+(?=(個)?(周|星期|禮拜)(?![以之]?[前後]))"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -628,13 +636,13 @@ class TimeUnit:
                 self.tp.day = 0
             self.tp.day += int(week * 7)
 
-    # 节假日相关
+    # 節假日相关
     def norm_setHoliday(self):
         rule = (
-            r"(情人节)|(母亲节)|(青年节)|(教师节)|(中元节)|(端午)|(劳动节)|(7夕)|(建党节)|(建军节)|(初13)|(初14)|(初15)|"
-            r"(初12)|(初11)|(初9)|(初8)|(初7)|(初6)|(初5)|(初4)|(初3)|(初2)|(初1)|(中和节)|(圣诞)|(中秋)|(春节)|(元宵)|"
-            r"(航海日)|(儿童节)|(国庆)|(植树节)|(元旦)|(重阳节)|(妇女节)|(记者节)|(立春)|(雨水)|(惊蛰)|(春分)|(清明)|(谷雨)|"
-            r"(立夏)|(小满 )|(芒种)|(夏至)|(小暑)|(大暑)|(立秋)|(处暑)|(白露)|(秋分)|(寒露)|(霜降)|(立冬)|(小雪)|(大雪)|"
+            r"(情人節)|(母親節)|(青年節)|(教師節)|(中元節)|(端午)|(勞動節)|(7夕)|(初13)|(初14)|(初15)|"
+            r"(初12)|(初11)|(初9)|(初8)|(初7)|(初6)|(初5)|(初4)|(初3)|(初2)|(初1)|(中和節)|(聖誕)|(中秋)|(春節)|(元宵)|"
+            r"(航海日)|(兒童節)|(國慶)|(植樹節)|(元旦)|(重陽節)|(婦女節)|(記者節)|(立春)|(雨水)|(驚蟄)| (春分)|(清明)|(穀雨)|"
+            r"(立夏)|(小滿)|(芒種)|(夏至)|(小暑)|(大暑)|(立秋)|(處暑)|(白露)|(秋分)|(寒露)|(霜降)|(立冬)|(小雪)|(大雪)|"
             r"(冬至)|(小寒)|(大寒)"
         )
         pattern: Pattern = re.compile(rule)
@@ -646,8 +654,8 @@ class TimeUnit:
                 year = self.normalizer.baseTime.year
                 self.tp.year = int(year)
             holi = match.group()
-            if "节" not in holi:
-                holi += "节"
+            if "節" not in holi:
+                holi += "節"
             if holi in holiday.solar:
                 month, day = holiday.solar[holi].split("-")
             elif holi in holiday.lunar:
@@ -659,7 +667,7 @@ class TimeUnit:
                 month = solar.solarMonth
                 day = solar.solarDay
             else:
-                holi = holi.strip("节")
+                holi = holi.strip("節")
                 if holi in ["小寒", "大寒"]:
                     self.tp.year += 1
                 month, day = self.china_24_st(self.tp.year, holi)
@@ -668,10 +676,10 @@ class TimeUnit:
 
     def china_24_st(self, year: int, china_st: str):
         """
-        二十世纪和二十一世纪，24节气计算
+        二十世纪和二十一世纪，24節气计算
         :param year: 年份
-        :param china_st: 节气
-        :return: 节气日期（月, 日）
+        :param china_st: 節气
+        :return: 節气日期（月, 日）
         """
         if (19 == year // 100) or (2000 == year):
             # 20世纪 key值
@@ -729,7 +737,7 @@ class TimeUnit:
                 7.18,
                 21.94,
             ]
-        # 二十四节气字典-- key值, 月份，(特殊年份，相差天数)...
+        # 二十四節气字典-- key值, 月份，(特殊年份，相差天数)...
         solar_terms = {
             "小寒": [st_key[0], "1", (2019, -1), (1982, 1)],
             "大寒": [st_key[1], "1", (2082, 1)],
@@ -814,14 +822,14 @@ class TimeUnit:
             flag[0] = True
             cur = cur.shift(years=1)
 
-        rule = r"后年"
+        rule = r"後年"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
             flag[0] = True
             cur = cur.shift(years=2)
 
-        rule = r"上*上(个)?月"
+        rule = r"上*上(個)?月"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -831,14 +839,14 @@ class TimeUnit:
             match = pattern.findall(self.exp_time)
             cur = cur.shift(months=-len(match))
 
-        rule = r"(本|这个)月"
+        rule = r"(本|這個)月"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
             flag[1] = True
             cur = cur.shift(months=0)
 
-        rule = r"下*下(个)?月"
+        rule = r"下*下(個)?月"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -891,7 +899,7 @@ class TimeUnit:
             flag[2] = True
             cur = cur.shift(days=1)
 
-        rule = r"(?<!大)后天"
+        rule = r"(?<!大)後天"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -899,7 +907,7 @@ class TimeUnit:
             flag[2] = True
             cur = cur.shift(days=2)
 
-        rule = r"大*大后天"
+        rule = r"大*大後天"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -953,7 +961,7 @@ class TimeUnit:
             span = week - cur.weekday()
             cur = cur.shift(weeks=1, days=span)
 
-        # 这里对下下下周的时间转换做出了改善
+        # 這里对下下下周的时间转换做出了改善
         rule = r"(?<=(下*下下(周|星期)))[1-7]?"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
@@ -970,7 +978,7 @@ class TimeUnit:
             match = pattern.findall(self.exp_time)
             cur = cur.shift(weeks=len(match), days=span)
 
-        rule = r"(?<=((?<!(上|下|个|[0-9]))(周|星期)))[1-7]"
+        rule = r"(?<=((?<!(上|下|個|[0-9]))(周|星期)))[1-7]"
         pattern: Pattern = re.compile(rule)
         match = pattern.search(self.exp_time)
         if match is not None:
@@ -1009,7 +1017,9 @@ class TimeUnit:
                 else:
                     arr.append(self.tp.tunit[i])
             self.normalizer.baseTime = tp2arrow(arr)
-            logger.debug(f"更新baseTime使之具有上下文关联性: {self.normalizer.baseTime}")
+            logger.debug(
+                f"更新baseTime使之具有上下文关联性: {self.normalizer.baseTime}"
+            )
 
     def preferFutureWeek(self, weekday, cur):
         # 1. 确认用户选项
@@ -1039,7 +1049,7 @@ class TimeUnit:
                 return
         # 2. 根据上下文补充时间
         self.checkContextTime(checkTimeIndex)
-        # 3. 根据上下文补充时间后再次检查被检查的时间级别之前，是否没有更高级的已经确定的时间，如果有，则不进行倾向处理
+        # 3. 根据上下文补充时间後再次检查被检查的时间级别之前，是否没有更高级的已经确定的时间，如果有，则不进行倾向处理
         # TODO 确认是否可以删除掉.
         # for i in range(0, checkTimeIndex):
         #     if self.tp.tunit[i] != -1:
@@ -1096,7 +1106,7 @@ class TimeUnit:
         for i in range(0, checkTimeIndex):
             if self.tp.tunit[i] == -1 and self.tp_origin.tunit[i] != -1:
                 self.tp.tunit[i] = self.tp_origin.tunit[i]
-        # 在处理小时这个级别时，如果上文时间是下午的且下文没有主动声明小时级别以上的时间，则也把下文时间设为下午
+        # 在处理小时這個级别时，如果上文时间是下午的且下文没有主动声明小时级别以上的时间，则也把下文时间设为下午
         if (
             self.isFirstTimeSolveContext is True
             and checkTimeIndex == 3
