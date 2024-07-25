@@ -10,6 +10,8 @@ readme = "README.md"
 python = "^3.9"
 arrow = ">=0.17.0"
 loguru = ">=0.5.3"
+regex = "^2024.5.15"
+pydantic = "^2.8.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.2"

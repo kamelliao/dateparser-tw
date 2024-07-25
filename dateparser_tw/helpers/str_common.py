@@ -124,12 +124,12 @@ def number_translator(target):
         target = pattern.sub(str(word2number(m.group())), target, 1)
 
     # 星期天表达式替换为星期7
-    pattern = re.compile("(?<=(周|星期))[末天日]")
+    pattern = re.compile("(?<=(周|週|星期|禮拜))[末天日]")
     match = pattern.finditer(target)
     for m in match:
         target = pattern.sub("7", target, 1)
 
-    pattern = re.compile("(?<!(周|星期))0?[0-9]?十[0-9]?")
+    pattern = re.compile("(?<!(周|週|星期|禮拜))0?[0-9]?十[0-9]?")
     match = pattern.finditer(target)
     for m in match:
         group = m.group()
