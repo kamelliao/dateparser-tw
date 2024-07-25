@@ -1,7 +1,7 @@
 from typing import Pattern
 
 import arrow
-import regex as re
+import re
 
 from .dataclasses import Setting, TimePoint, get_granularity
 
@@ -79,10 +79,10 @@ class Parser:
     def norm_hour_notation(self):
         """Must be called after norm_absolute_time."""
         RE_AM = re.compile(
-            r"凌晨|清晨|早上|早晨|早間|晨間|今早|上午|白天|(?i)\b(?:a\.?m\.?|am)"
+            r"(凌晨|清晨|早上|早晨|早間|晨間|今早|上午|白天|am|AM|a\.m\.|a\.m|A\.M\.|A\.M)"
         )
         RE_PM = re.compile(
-            r"下午|中午|午後|晚上|夜間|夜裡|夜間|今晚|(?i)\b(?:p\.?m\.?|pm)"
+            r"(下午|中午|午後|晚上|夜間|夜裡|夜間|今晚|pm|PM|p\.m\.|p\.m|P\.M\.|P\.M)"
         )
 
         if match := RE_AM.search(self.date_string):

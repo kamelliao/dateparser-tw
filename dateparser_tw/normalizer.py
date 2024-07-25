@@ -7,7 +7,7 @@ from loguru import logger
 from .helpers.str_common import (del_keyword, filter_irregular_expression,
                                  number_translator)
 from .resource.pattern import pattern
-from .unit import Parser
+from .parser import Parser
 
 
 def merge_matches(matches: List[str]) -> List[str]:

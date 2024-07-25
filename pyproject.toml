@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dateparser-tw"
-version = "3.0.1"
+version = "0.1.0"
 description = "Convert Chinese time expressions to corresponding time strings, supporting time points, time periods, and time intervals."
 authors = ["Kamel Liao <kamelliaotw@gmail.com>"]
 license = "MIT Licence"
@@ -10,8 +10,8 @@ readme = "README.md"
 python = "^3.9"
 arrow = ">=0.17.0"
 loguru = ">=0.5.3"
-regex = "^2024.5.15"
 pydantic = "^2.8.2"
+regex = "^2024.7.24"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.2"
@@ -20,6 +20,7 @@ pytest = "^8.2.2"
 pytest-flakes = "^4.0.5"
 python-dotenv = "^1.0.1"
 pre-commit = "^3.7.1"
+flake8 = "^7.1.0"
 
 
 [build-system]
