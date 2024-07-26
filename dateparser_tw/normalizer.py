@@ -1,25 +1,27 @@
-from typing import List, Union
+import re
+from typing import List, Pattern, Union
 
 import arrow
 from arrow.arrow import Arrow
 from loguru import logger
 
-from .helpers.str_common import (del_keyword, filter_irregular_expression,
-                                 number_translator)
-from .resource.pattern import pattern
+from .helpers.str_common import convert_chinese_numeral
 from .parser import Parser
+from .resource.pattern import PATTERN
+
+RE_SPACES = re.compile(r"\s+")
+RE_LANGUAGE_PARTICLES = re.compile(r"[的]+")
 
 
-def merge_matches(matches: List[str]) -> List[str]:
+def extract_spans(date_string: str, pattern: Pattern) -> List[str]:
+    matches = pattern.finditer(date_string)
+
     start_position = -1
     end_position = -1
     match_index = 0
     extracted_strings = []
 
-    logger.debug("Extracting keywords using regex:")
-
     for match in matches:
-        logger.debug(match)
         start_position = match.start()
 
         if start_position == end_position:
@@ -31,7 +33,6 @@ def merge_matches(matches: List[str]) -> List[str]:
             # Otherwise, append the new match
             extracted_strings.append(match.group())
 
-        logger.debug(f"Extracted strings: {extracted_strings}")
         end_position = match.end()
         match_index += 1
 
@@ -39,10 +40,9 @@ def merge_matches(matches: List[str]) -> List[str]:
 
 
 def sanitize_date(date_string: str) -> str:
-    date_string = filter_irregular_expression(date_string)
-    date_string = del_keyword(date_string, r"\s+")  # clear spaces
-    date_string = del_keyword(date_string, "[的]+")  # clear language particles
-    date_string = number_translator(date_string)
+    date_string = RE_SPACES.sub("", date_string)  # clear spaces
+    date_string = RE_LANGUAGE_PARTICLES.sub("", date_string)  # clear language particles
+    date_string = convert_chinese_numeral(date_string)
 
     return date_string
 
@@ -50,7 +50,7 @@ def sanitize_date(date_string: str) -> str:
 class DateParser:
     def __init__(self, tz="Asia/Taipei"):
         self.tz = tz
-        self.pattern = pattern
+        self.pattern = PATTERN
 
     def parse(self, text: str, basetime: Union[arrow.Arrow, str] = None) -> dict:
         self.target = text
@@ -65,16 +65,18 @@ class DateParser:
         return parsed_date
 
     def extract(self, date_string: str) -> dict:
+        logger.debug(f"Original date string: {date_string}")
         date_string = sanitize_date(date_string)
+        extracted_spans = extract_spans(date_string, self.pattern)
 
-        matches = list(self.pattern.finditer(date_string))
-        extrated_spans = merge_matches(matches)
+        logger.debug(f"Santized date string: {date_string}")
+        logger.debug(f"Extracted spans: {extracted_spans}")
 
-        spans = []
         # TODO: 时间上下文： 前一个识别出来的时间会是下一个时间的上下文，用于处理：周六3点到5点这样的多个时间的识别，第二个5点应识别到是周六的。
         # contextTp = TimePoint()
 
-        for span in extrated_spans:
+        spans = []
+        for span in extracted_spans:
             spans.append(Parser.parse(span, self.basetime))
 
         return spans[0]
