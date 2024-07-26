@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Pattern, Union
 
 import arrow
 from arrow.arrow import Arrow
@@ -6,11 +6,13 @@ from loguru import logger
 
 from .helpers.str_common import (del_keyword, filter_irregular_expression,
                                  number_translator)
-from .resource.pattern import pattern
 from .parser import Parser
+from .resource.pattern import pattern
 
 
-def merge_matches(matches: List[str]) -> List[str]:
+def extract_spans(date_string: str, pattern: Pattern) -> List[str]:
+    matches = pattern.finditer(date_string)
+
     start_position = -1
     end_position = -1
     match_index = 0
@@ -66,15 +68,13 @@ class DateParser:
 
     def extract(self, date_string: str) -> dict:
         date_string = sanitize_date(date_string)
+        extracted_spans = extract_spans(date_string, self.pattern)
 
-        matches = list(self.pattern.finditer(date_string))
-        extrated_spans = merge_matches(matches)
-
-        spans = []
         # TODO: 时间上下文： 前一个识别出来的时间会是下一个时间的上下文，用于处理：周六3点到5点这样的多个时间的识别，第二个5点应识别到是周六的。
         # contextTp = TimePoint()
 
-        for span in extrated_spans:
+        spans = []
+        for span in extracted_spans:
             spans.append(Parser.parse(span, self.basetime))
 
         return spans[0]

@@ -1,7 +1,7 @@
+import re
 from typing import Pattern
 
 import arrow
-import re
 
 from .dataclasses import Setting, TimePoint, get_granularity
 
