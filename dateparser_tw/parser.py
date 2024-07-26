@@ -1,7 +1,7 @@
 import re
-from typing import Pattern
 
 import arrow
+from loguru import logger
 
 from .dataclasses import Setting, TimePoint, get_granularity
 
@@ -34,21 +34,19 @@ class Parser:
         self.fill_empty_fields()
 
     def norm_absolute_date(self):
-        year_pattern = r"(?P<year>\d{4})年"
-        month_pattern = r"(?P<month>10|11|12|[1-9])月"
-        day_pattern = r"(?P<day>[0-3][0-9]|[1-9])[日號]?"
+        RE_YEAR = re.compile(r"(?P<year>\d{4})年")
+        RE_MONTH = re.compile(r"(?P<month>10|11|12|[1-9])月")
+        RE_DAY = re.compile(r"(?P<day>[0-3][0-9]|[1-9])[日號]")
 
-        RE_ABSOLUTE_DATE = re.compile(
-            rf"({year_pattern})?({month_pattern}({day_pattern})?)?"
-        )
-        match = RE_ABSOLUTE_DATE.search(self.date_string)
-
-        if match.group("year"):
+        if match := RE_YEAR.search(self.date_string):
             self.tp.year = int(match.group("year"))
-        if match.group("month"):
+            logger.debug(f"Matched: (year, {self.tp.year})")
+        if match := RE_MONTH.search(self.date_string):
             self.tp.month = int(match.group("month"))
-        if match.group("day"):
+            logger.debug(f"Matched: (month, {self.tp.month})")
+        if match := RE_DAY.search(self.date_string):
             self.tp.day = int(match.group("day"))
+            logger.debug(f"Matched: (day, {self.tp.day})")
 
     def norm_absolute_time(self):
         hour_pattern = r"(?P<hour>[0-2]?[0-9])[點時](?P<hour_half>半)?"
@@ -94,51 +92,7 @@ class Parser:
             if self.tp.hour and 0 <= self.tp.hour <= 11:
                 self.tp.hour += 12
 
-    def norm_prep_related(self):
-        """設定以上文時間為基準的時間偏移計算
-        TODO: `半`小時、`上上上...`、`這個`、`本`
-        """
-        rule_base = r"(\d+){}(?:[以之]?([前後]))"
-
-        rules = {
-            "year": rule_base.format("年"),
-            "month": rule_base.format("個月"),
-            "day": rule_base.format("天"),
-            "hour": rule_base.format("個?(?:小時|鐘頭)"),
-            "minute": rule_base.format("(?:分|分鐘)"),
-            "second": rule_base.format("(?:分|秒鐘)"),
-            "week": rule_base.format("個?(?:周|週|星期|禮拜)"),
-        }
-
-        for key, rule in rules.items():
-            pattern: Pattern = re.compile(rule)
-            match = pattern.search(self.date_string)
-            if match is None:
-                continue
-
-            # `前`: -1, `後`: 1
-            direction = 1 if match.group(2) == "後" else -1
-            value = direction * int(match.group(1))
-
-            self.is_timedelta = True
-            if key == "week":
-                if self.tp.day == -1:
-                    self.tp.day = 0
-                self.tp.day += int(value * 7)
-            else:
-                # TODO: basetime + value
-                setattr(self.tp, key, value)
-
     def norm_relative_expression(self):
-        curr = self.basetime
-
-        # whether to modify the year/month/day
-        mod_flags = {
-            "year": False,
-            "month": False,
-            "day": False,
-        }
-
         SHIFTS = {
             "前": -2,
             "去": -1,
@@ -149,6 +103,14 @@ class Parser:
             "次": 1,
             "隔": 1,
             "後": 2,
+        }
+
+        # whether to modify the year/month/day
+        curr = self.basetime
+        mod_flags = {
+            "year": False,
+            "month": False,
+            "day": False,
         }
 
         # year
@@ -220,6 +182,93 @@ class Parser:
             self.tp.month = int(curr.month)
         if mod_flags["day"]:
             self.tp.day = int(curr.day)
+
+    def norm_prep_related(self):
+        """設定以上文時間為基準的時間偏移計算"""
+        PREPOSITIONS = {
+            "前": -1,
+            "後": 1,
+        }
+
+        HALF_NUMBERS = {
+            "year": {"value": 6, "unit": "個月"},  # 6 months
+            "month": {"value": 15, "unit": "天"},  # 15 days
+            "day": {"value": 12, "unit": "小時"},  # 12 hours
+            "hour": {"value": 30, "unit": "分鐘"},  # 30 minutes
+            "minute": {"value": 30, "unit": "秒"},  # 30 seconds
+        }
+
+        # `2個月前`, `2個半月前`, `半個月前`, `半月前`, TODO: `2月前` is `before February` or `2 months ago`?
+        rule_base = r"(?P<value>(?P<int_part>\d+)?(?P<half_exp>個?半)?)(?P<unit>{})(?P<half_exp_after>半)?(?:[以之]?(?P<prep>[前後]))"
+
+        rules = {
+            "year": rule_base.format("年"),
+            "month": rule_base.format("個?月"),
+            "day": rule_base.format("天"),
+            "week": rule_base.format("個?(?:周|週|星期|禮拜)"),
+            "hour": rule_base.format("個?(?:小時|鐘頭)"),
+            "minute": rule_base.format("(?:分|分鐘)"),
+            "second": rule_base.format("(?:分|秒鐘)"),
+        }
+
+        rules = {key: re.compile(value) for key, value in rules.items()}
+
+        # normalize `半` expression. eg. `半年前` -> `6個月前`
+        # this is because `arrow` does not support 0.5 as a time unit
+        for key, pattern in rules.items():
+            match = pattern.search(self.date_string)
+            if match is None:
+                continue
+            # note: `half_exp_after` is for years, eg. `3年半前`
+            if not match.group("half_exp") and not match.group("half_exp_after"):
+                continue
+
+            match_dict = match.groupdict()
+            match_dict.update(HALF_NUMBERS.get(key))
+
+            # eg. `3個半月前` -> `105天前` (15 + 3*30)
+            if match_dict["int_part"]:
+                match_dict["value"] += int(match_dict["int_part"]) * (
+                    HALF_NUMBERS.get(key)["value"] * 2
+                )
+
+            # reconstruct the date_string
+            self.date_string = (
+                f"{match_dict['value']}{match_dict['unit']}{match_dict['prep']}"
+            )
+            logger.debug(f"Normalized `半` expression: {self.date_string}")
+
+        # parse timepoint
+        curr = self.basetime
+        mod_flags = {key: False for key in rules.keys() if key != "week"}
+
+        for key, pattern in rules.items():
+            match = pattern.search(self.date_string)
+            if match is None:
+                continue
+
+            direction = PREPOSITIONS.get(match.group("prep"))
+            value = direction * int(match.group("value"))
+            curr = curr.shift(**{key + "s": value})
+
+            if key == "week":
+                mod_flags["day"] = True
+            else:
+                mod_flags[key] = True
+
+            logger.debug(f"Matched: ({key}, {value})")
+
+        # update flags: if a unit is mentioned, all units above it should be updated
+        running_flag = False
+        for unit in reversed(mod_flags.keys()):
+            if mod_flags[unit]:
+                running_flag = True
+            mod_flags[unit] = running_flag
+
+        # update the timepoint, granularity to only that mentioned in the date_string
+        for key, value in mod_flags.items():
+            if value:
+                setattr(self.tp, key, getattr(curr, key))
 
     def fill_basetime(self):
         if self.tp.second and not self.tp.minute:
