@@ -1,4 +1,5 @@
 import re
+
 from loguru import logger
 
 from .utils import replace_spans
