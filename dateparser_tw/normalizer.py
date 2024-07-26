@@ -5,6 +5,7 @@ import arrow
 from arrow.arrow import Arrow
 from loguru import logger
 
+from .dataclasses import TimePoint
 from .helpers.str_common import convert_chinese_numeral
 from .parser import Parser
 from .resource.pattern import PATTERN
@@ -52,7 +53,7 @@ class DateParser:
         self.tz = tz
         self.pattern = PATTERN
 
-    def parse(self, text: str, basetime: Union[arrow.Arrow, str] = None) -> dict:
+    def parse(self, text: str, basetime: Union[arrow.Arrow, str] = None):
         self.target = text
         self.basetime: Arrow = (
             arrow.now(self.tz)
@@ -64,7 +65,7 @@ class DateParser:
 
         return parsed_date
 
-    def extract(self, date_string: str) -> dict:
+    def extract(self, date_string: str) -> TimePoint:
         logger.debug(f"Original date string: {date_string}")
         date_string = sanitize_date(date_string)
         extracted_spans = extract_spans(date_string, self.pattern)
