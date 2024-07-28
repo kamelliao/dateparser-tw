@@ -152,29 +152,29 @@ class Parser:
 
         # week
         RE_WEEK_RELATIVE = re.compile(
-            r"(上+個?|下+個?|這個?|本)?(?:周|週|星期|禮拜)([1-7]?)"
+            r"(?P<dem>上+個?|下+個?|這個?|本)?(?:周|週|星期|禮拜)(?P<weekday>[1-7]?)"
         )
         match = RE_WEEK_RELATIVE.search(self.date_string)
-        if match is not None:
+        if match:
             mod_flags["day"] = True
 
             # set week
-            if "上" in match.group(1):
-                curr = curr.shift(weeks=-match.group(1).count("上"))
-            elif "下" in match.group(1):
-                curr = curr.shift(weeks=match.group(1).count("下"))
-            else:
-                curr = curr.shift(weeks=0)
+            if match.group('dem'):
+                if "上" in match.group(1):
+                    curr = curr.shift(weeks=-match.group(1).count("上"))
+                elif "下" in match.group(1):
+                    curr = curr.shift(weeks=match.group(1).count("下"))
 
             # set day (eg. `這週3`)
-            if match.group(2):
-                offset = (int(match.group(2)) - 1) - curr.weekday()
+            if match.group('weekday'):
+                offset = (int(match.group('weekday')) - 1) - curr.weekday()
                 curr = curr.shift(days=offset)
 
             # when demonstrative pronouns like `上個` are not used, eg., `周5`
             # in this case, should consider whether user prefer future time
-            if not match.group(1):
-                curr = self.preferFutureWeek(int(match.group(2)), curr)
+            if not match.group('dem'):
+                # TODO:
+                pass
 
         if any(mod_flags.values()):
             self.tp.year = int(curr.year)
