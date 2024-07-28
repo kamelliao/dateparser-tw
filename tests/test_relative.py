@@ -63,6 +63,8 @@ def test_relative_year(parser, target, expected):
         ("上週六", "2024-07-13"),
         ("上禮拜天", "2024-07-14"),
         ("上星期日", "2024-07-14"),
+        ('星期三', '2024-07-17'),
+        ('這週三', '2024-07-17'),
     ],
 )
 def test_relative_week(parser, target, expected):
